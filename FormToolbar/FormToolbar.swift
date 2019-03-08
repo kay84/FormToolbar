@@ -10,6 +10,8 @@ import UIKit
 
 final public class FormToolbar: UIToolbar {
     
+    public typealias DirectionHandler = (_ currentInput: FormItem) -> ()
+    
     /// Direction
     /// 
     /// Back/Forward arrow button type.
@@ -21,10 +23,10 @@ final public class FormToolbar: UIToolbar {
         case leftRight
     }
     
-    private class FormItem {
-        weak var input: FormInput?
-        weak var previousInput: FormInput?
-        weak var nextInput: FormInput?
+    public class FormItem {
+        public weak var input: FormInput?
+        public weak var previousInput: FormInput?
+        public weak var nextInput: FormInput?
     }
 
     private var _backButton: UIBarButtonItem?
@@ -152,6 +154,11 @@ final public class FormToolbar: UIToolbar {
         return currentFormItem?.nextInput
     }
     
+    //
+    public var onForward:DirectionHandler?
+    public var onBack:DirectionHandler?
+    public var onDone:DirectionHandler?
+    
     /// Initializer
     ///
     /// - Parameters:
@@ -235,16 +242,29 @@ final public class FormToolbar: UIToolbar {
     /// Go back to previous input.
     public func goBack() {
         if let currentFormItem = currentFormItem {
-            currentFormItem.previousInput?.responder.becomeFirstResponder()
-            currentFormItem.input?.responder.resignFirstResponder()
+            
+            if onBack != nil {
+                onBack?(currentFormItem)
+            } else {
+                currentFormItem.previousInput?.responder.becomeFirstResponder()
+                currentFormItem.input?.responder.resignFirstResponder()
+            }
+
         }
     }
     
     /// Go forward to next input.
     public func goForward() {
         if let currentFormItem = currentFormItem {
-            currentFormItem.nextInput?.responder.becomeFirstResponder()
-            currentFormItem.input?.responder.resignFirstResponder()
+            
+            if onForward != nil {
+                onForward?(currentFormItem)
+            } else {
+                currentFormItem.nextInput?.responder.becomeFirstResponder()
+                currentFormItem.input?.responder.resignFirstResponder()
+            }
+            
+            
         }
     }
     
@@ -253,7 +273,7 @@ final public class FormToolbar: UIToolbar {
         setItems(buttonItems, animated: false)
     }
     
-    @objc private func backButtonDidTap(_: UIBarButtonItem) {
+    @objc private func backButtonDidTap(_: UIBarButtonItem) { 
         goBack()
     }
     
@@ -262,6 +282,9 @@ final public class FormToolbar: UIToolbar {
     }
     
     @objc private func doneButtonDidtap(_: UIBarButtonItem) {
+        if let currentFormItem = currentFormItem {
+            onDone?(currentFormItem)
+        }
         currentFormItem?.input?.responder.resignFirstResponder()
     }
 }
